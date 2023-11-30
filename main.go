@@ -1,8 +1,31 @@
 package main
 
 import (
+	"log"
 	"net/http"
 )
+
+func main() {
+	const port = "8080"
+	//create new server multiplexer
+	mux := http.NewServeMux()
+	//run it through middleware for Cors header change
+	corsMux := middlewareCors(mux)
+
+	//create server
+	srv := &http.Server{
+		Addr:    ":" + port,
+		Handler: corsMux,
+	}
+
+	log.Printf("Serving on port: %s\n", port)
+	log.Fatal(srv.ListenAndServe())
+
+	// // assign it as http handler for root
+	// http.Handle("/", corsMux)
+	// //port to work on
+	// http.ListenAndServe(":8080", nil)
+}
 
 func middlewareCors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -15,15 +38,4 @@ func middlewareCors(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
-}
-
-func main() {
-	//create new server multiplexer
-	mux := http.NewServeMux()
-	//run it through middleware for Cors header change
-	corsMux := middlewareCors(mux)
-	// assign it as http handler for root
-	http.Handle("/", corsMux)
-	//port to work on
-	http.ListenAndServe(":8080", nil)
 }

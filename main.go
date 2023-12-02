@@ -27,24 +27,10 @@ func main() {
 	log.Fatal(srv.ListenAndServe())
 }
 
-func middlewareCors(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		//Headers need to be modified so other websites can send request.
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, OPTIONS, PUT, DELETE")
-		w.Header().Set("Access-Control-Allow-Headers", "*")
-		if r.Method == "OPTIONS" {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-		next.ServeHTTP(w, r)
-	})
-}
-
 func readynessEndPoint(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain;charset=utf-8")
+	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.WriteHeader(http.StatusOK)
-	body := "this is the body"
+	body := "OK"
 	byteSlice := []byte(body)
 	w.Write(byteSlice)
 }

@@ -1,21 +1,40 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+
+	"github.com/go-chi/chi/v5"
 )
+
+type apiConfig struct {
+	fileserverHits int
+}
 
 func main() {
 	const filepathRoot = "."
 	const port = "8080"
+	apiCfg := apiConfig{
+		fileserverHits: 0,
+	}
+	fsHandler := http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))
+	fsMidHandler := apiCfg.middlewareMetricsInc(fsHandler)
 	//create new server multiplexer
-	mux := http.NewServeMux()
+	// mux := http.NewServeMux()
+	r := chi.NewRouter()
+	apiRouter := chi.NewRouter()
 	//make mux handle request to root path
 	//allows the fileserver to serve index.html without returning index.html
-	mux.Handle("/app/", http.StripPrefix("/app/", http.FileServer(http.Dir(filepathRoot))))
-	mux.HandleFunc("/healthz", readynessEndPoint)
+	r.Handle("/app", fsMidHandler)
+	r.Handle("/app/*", fsMidHandler)
+
+	r.Mount("/api", apiRouter)
+	apiRouter.Get("/healthz", readynessEndPoint)
+	apiRouter.Get("/metrics", apiCfg.handlerMetrics)
+	apiRouter.Get("/reset", apiCfg.resetEndPoint)
 	//run it through middleware for Cors header change
-	corsMux := middlewareCors(mux)
+	corsMux := middlewareCors(r)
 	//create server from a struct that describes the server configuration
 	srv := &http.Server{
 		Addr:    ":" + port,
@@ -27,10 +46,14 @@ func main() {
 	log.Fatal(srv.ListenAndServe())
 }
 
-func readynessEndPoint(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-	w.WriteHeader(http.StatusOK)
-	body := "OK"
-	byteSlice := []byte(body)
-	w.Write(byteSlice)
+func (cfg *apiConfig) middlewareMetricsInc(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cfg.fileserverHits++
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (cfg *apiConfig) handlerMetrics(w http.ResponseWriter, r *http.Request) {
+	w.Header().Add("Cache-Control", "no-cache")
+	w.Write([]byte(fmt.Sprintf("Hits: %d", cfg.fileserverHits)))
 }

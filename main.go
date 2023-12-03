@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -38,6 +39,7 @@ func main() {
 	apiRouter.Get("/healthz", readynessEndPoint)
 	apiRouter.Get("/metrics", apiCfg.handlerMetrics)
 	apiRouter.Get("/reset", apiCfg.resetEndPoint)
+	apiRouter.Post("/validate_chirp", postChirpValidation)
 	//admin routes mounted
 	r.Mount("/admin", adminRouter)
 	adminRouter.Get("/metrics", apiCfg.getAdminIndex)
@@ -52,6 +54,53 @@ func main() {
 	//ListenAndServe listens to TCP server.Addr, then calls Serve to handle incoming requests
 	//main function blocks until the server is shut down, returning an error
 	log.Fatal(srv.ListenAndServe())
+}
+
+func postChirpValidation(w http.ResponseWriter, r *http.Request) {
+	//decode request
+	type parameters struct {
+		Body string `json:"body"`
+	}
+	decoder := json.NewDecoder(r.Body)
+	params := parameters{}
+	err := decoder.Decode(&params)
+	if err != nil {
+		log.Printf("Error decoding parameters: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	//encode response
+	w.Header().Set("Content-Type", "application/json")
+	// log.Printf(strconv.Itoa(len(params.Body)))
+	if len(params.Body) > 140 {
+		type returnErr struct {
+			Err string `json:"error"`
+		}
+		errRes := returnErr{
+			Err: "chirp is too long",
+		}
+		dat, err := json.Marshal(errRes)
+		if err != nil {
+			log.Printf("Error sending error JSON: %s", err)
+		}
+		w.WriteHeader(400)
+		w.Write(dat)
+		return
+	}
+	w.WriteHeader(200)
+	type returnValid struct {
+		Valid bool `json:"valid"`
+	}
+	respBody := returnValid{
+		Valid: true,
+	}
+	dat, err := json.Marshal(respBody)
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	w.Write(dat)
 }
 
 func (cfg *apiConfig) getAdminIndex(w http.ResponseWriter, r *http.Request) {

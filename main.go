@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -88,11 +89,18 @@ func postChirpValidation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(200)
+	words := strings.Fields(params.Body)
+	for i, word := range words {
+		if strings.EqualFold(word, "kerfuffle") || strings.EqualFold(word, "sharbert") || strings.EqualFold(word, "fornax") {
+			words[i] = "****"
+		}
+	}
+	filteredSentence := strings.Join(words, " ")
 	type returnValid struct {
-		Valid bool `json:"valid"`
+		Cleaned_body string `json:"cleaned_body"`
 	}
 	respBody := returnValid{
-		Valid: true,
+		Cleaned_body: filteredSentence,
 	}
 	dat, err := json.Marshal(respBody)
 	if err != nil {

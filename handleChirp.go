@@ -2,19 +2,18 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
 	"log"
 	"net/http"
 	"strings"
 )
 
-type IDGenerator struct {
-	counter int
+type Chirp struct {
+	ID   int    `json:"id"`
+	Body string `json:"body"`
 }
 
 func postChirpValidation(w http.ResponseWriter, r *http.Request) {
-	newCounter := IDGenerator{
-		counter: 1,
-	}
 	//decode request
 	type parameters struct {
 		Body string `json:"body"`
@@ -27,9 +26,8 @@ func postChirpValidation(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		return
 	}
-	//encode response
-	w.Header().Set("Content-Type", "application/json")
-	if len(params.Body) > 140 {
+	cleanedChirp, err := validateChirp(params.Body)
+	if err != nil {
 		type returnErr struct {
 			Err string `json:"error"`
 		}
@@ -44,17 +42,11 @@ func postChirpValidation(w http.ResponseWriter, r *http.Request) {
 		w.Write(dat)
 		return
 	}
+	//encode response
+	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
-	words := strings.Fields(params.Body)
-	for i, word := range words {
-		if strings.EqualFold(word, "kerfuffle") || strings.EqualFold(word, "sharbert") || strings.EqualFold(word, "fornax") {
-			words[i] = "****"
-		}
-	}
-	filteredSentence := strings.Join(words, " ")
 	respBody := Chirp{
-		Id:   newCounter.counter,
-		Body: filteredSentence,
+		Body: cleanedChirp,
 	}
 	dat, err := json.Marshal(respBody)
 	if err != nil {
@@ -63,4 +55,18 @@ func postChirpValidation(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.Write(dat)
+}
+
+func validateChirp(body string) (string, error) {
+	if len(body) > 140 {
+		return "", errors.New("chirp is too long")
+	}
+	words := strings.Fields(body)
+	for i, word := range words {
+		if strings.EqualFold(word, "kerfuffle") || strings.EqualFold(word, "sharbert") || strings.EqualFold(word, "fornax") {
+			words[i] = "****"
+		}
+	}
+	filteredSentence := strings.Join(words, " ")
+	return filteredSentence, nil
 }

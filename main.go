@@ -5,17 +5,24 @@ import (
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
+	"github.com/jluiscool/go-chirpy/internal/database"
 )
 
 type apiConfig struct {
 	fileserverHits int
+	DB             *database.DB
 }
 
 func main() {
+	db, err := database.NewDB("database.json")
+	if err != nil {
+		log.Fatal(err)
+	}
 	const filepathRoot = "."
 	const port = "8080"
 	apiCfg := apiConfig{
 		fileserverHits: 0,
+		DB:             db,
 	}
 	fsHandler := http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot)))
 	fsMidHandler := apiCfg.middlewareMetricsInc(fsHandler)
@@ -45,7 +52,6 @@ func main() {
 		Handler: corsMux,
 	}
 	//create DB
-	NewDB("./database.json")
 	log.Printf("Serving on port: %s\n", port)
 	//ListenAndServe listens to TCP server.Addr, then calls Serve to handle incoming requests
 	//main function blocks until the server is shut down, returning an error

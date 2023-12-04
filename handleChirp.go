@@ -11,11 +11,6 @@ type IDGenerator struct {
 	counter int
 }
 
-type Chirp struct {
-	Body string `json:"body"`
-	Id   int    `json:"id"`
-}
-
 func postChirpValidation(w http.ResponseWriter, r *http.Request) {
 	newCounter := IDGenerator{
 		counter: 1,

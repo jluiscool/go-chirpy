@@ -1,14 +1,8 @@
 package main
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
-	"fmt"
 	"log"
 	"net/http"
-	"os"
-	"sync"
 
 	"github.com/go-chi/chi/v5"
 )
@@ -56,49 +50,4 @@ func main() {
 	//ListenAndServe listens to TCP server.Addr, then calls Serve to handle incoming requests
 	//main function blocks until the server is shut down, returning an error
 	log.Fatal(srv.ListenAndServe())
-}
-
-type DBStructure struct {
-	Chirps map[int]Chirp `json:"chirps"`
-}
-
-type DB struct {
-	Path string
-	Mux  *sync.RWMutex
-}
-
-// NewDB creates a new database connection
-// and creates the database file if it doesn't exist
-func NewDB(path string) (*DB, error) {
-	newDB := DB{
-		Path: path,
-		Mux:  &sync.RWMutex{},
-	}
-	errDB := os.WriteFile(path, []byte(""), 0666)
-	if errDB != nil {
-		return nil, errDB
-	}
-	return &newDB, nil
-}
-
-func (db *DB) GetChirps() ([]Chirp, error) {
-	// Makes filecontent into a io.Reader
-	dat, err := os.ReadFile(db.Path)
-	if err != nil {
-		return []Chirp{}, errors.New("could not read the database")
-	}
-	//turn []bytes to io.Reader
-	reader := bytes.NewReader(dat)
-	//decode the JSON
-	decoder := json.NewDecoder(reader)
-	dbData := DBStructure{}
-	decoderErr := decoder.Decode(&dbData)
-	if decoderErr != nil {
-		log.Printf("Error decoding parameters: %s", err)
-		return []Chirp{}, decoderErr
-	}
-	for _, newChirp := range dbData.Chirps {
-		fmt.Println(newChirp.Body)
-	}
-	return []Chirp{}, nil
 }

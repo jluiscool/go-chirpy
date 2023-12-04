@@ -7,7 +7,19 @@ import (
 	"strings"
 )
 
+type IDGenerator struct {
+	counter int
+}
+
+type Chirp struct {
+	Body string `json:"body"`
+	Id   int    `json:"id"`
+}
+
 func postChirpValidation(w http.ResponseWriter, r *http.Request) {
+	newCounter := IDGenerator{
+		counter: 1,
+	}
 	//decode request
 	type parameters struct {
 		Body string `json:"body"`
@@ -22,7 +34,6 @@ func postChirpValidation(w http.ResponseWriter, r *http.Request) {
 	}
 	//encode response
 	w.Header().Set("Content-Type", "application/json")
-	// log.Printf(strconv.Itoa(len(params.Body)))
 	if len(params.Body) > 140 {
 		type returnErr struct {
 			Err string `json:"error"`
@@ -38,7 +49,7 @@ func postChirpValidation(w http.ResponseWriter, r *http.Request) {
 		w.Write(dat)
 		return
 	}
-	w.WriteHeader(200)
+	w.WriteHeader(201)
 	words := strings.Fields(params.Body)
 	for i, word := range words {
 		if strings.EqualFold(word, "kerfuffle") || strings.EqualFold(word, "sharbert") || strings.EqualFold(word, "fornax") {
@@ -46,11 +57,9 @@ func postChirpValidation(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	filteredSentence := strings.Join(words, " ")
-	type returnValid struct {
-		Cleaned_body string `json:"cleaned_body"`
-	}
-	respBody := returnValid{
-		Cleaned_body: filteredSentence,
+	respBody := Chirp{
+		Id:   newCounter.counter,
+		Body: filteredSentence,
 	}
 	dat, err := json.Marshal(respBody)
 	if err != nil {

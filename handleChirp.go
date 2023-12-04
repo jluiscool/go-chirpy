@@ -13,7 +13,7 @@ type Chirp struct {
 	Body string `json:"body"`
 }
 
-func postChirpValidation(w http.ResponseWriter, r *http.Request) {
+func handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 	//decode request
 	type parameters struct {
 		Body string `json:"body"`

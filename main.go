@@ -40,7 +40,7 @@ func main() {
 	apiRouter.Get("/healthz", readynessEndPoint)
 	apiRouter.Get("/metrics", apiCfg.handlerMetrics)
 	apiRouter.Get("/reset", apiCfg.resetEndPoint)
-	apiRouter.Post("/chirps", postChirpValidation)
+	apiRouter.Post("/chirps", handlerPostChirp)
 	//admin routes mounted
 	r.Mount("/admin", adminRouter)
 	adminRouter.Get("/metrics", apiCfg.getAdminIndex)

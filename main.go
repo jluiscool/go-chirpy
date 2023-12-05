@@ -42,6 +42,7 @@ func main() {
 	apiRouter.Get("/reset", apiCfg.resetEndPoint)
 	apiRouter.Post("/chirps", handlerPostChirp)
 	apiRouter.Get("/chirps", handlerGetChirps)
+	apiRouter.Get("/chirps/{id}", handlerGetChirp)
 	//admin routes mounted
 	r.Mount("/admin", adminRouter)
 	adminRouter.Get("/metrics", apiCfg.getAdminIndex)

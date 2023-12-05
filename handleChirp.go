@@ -5,8 +5,10 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strconv"
 	"strings"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/jluiscool/go-chirpy/internal/database"
 )
 
@@ -97,6 +99,31 @@ func handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
 	dat, err := json.Marshal(allChirps)
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	w.Write(dat)
+}
+
+func handlerGetChirp(w http.ResponseWriter, r *http.Request) {
+	idParam := chi.URLParam(r, "id")
+	dbCon, err := database.NewDB("./database.json")
+	if err != nil {
+		log.Printf("Error handling db connection: %s", err)
+		return
+	}
+	id, err := strconv.Atoi(idParam)
+	foundChirp, err := dbCon.GetChirpByID(id)
+	if err != nil {
+		log.Printf("Error getting chirps: %s", err)
+		w.WriteHeader(404)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	dat, err := json.Marshal(foundChirp)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
 		w.WriteHeader(500)

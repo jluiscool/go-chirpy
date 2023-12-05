@@ -154,3 +154,27 @@ func (db *DB) GetUsers() ([]User, error) {
 	}
 	return users, nil
 }
+
+func (db *DB) CreateUser(email string) (User, error) {
+	//load db
+	dbStructure, err := db.loadDB()
+	if err != nil {
+		return User{}, err
+	}
+	//get new id
+	userId := len(dbStructure.Users) + 1
+	//make user
+	user := User{
+		Email: email,
+		Id:    userId,
+	}
+	//put user into structure
+	dbStructure.Users[userId] = user
+	//put structure into db
+	err = db.writeDB(dbStructure)
+	if err != nil {
+		return user, err
+	}
+	//return user
+	return user, nil
+}

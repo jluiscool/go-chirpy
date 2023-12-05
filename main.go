@@ -45,6 +45,7 @@ func main() {
 	apiRouter.Get("/chirps/{id}", handlerGetChirp)
 	//users endpoint
 	apiRouter.Get("/users", handlerGetUsers)
+	apiRouter.Post("/users", handlePostUsers)
 	//admin routes mounted
 	r.Mount("/admin", adminRouter)
 	adminRouter.Get("/metrics", apiCfg.getAdminIndex)

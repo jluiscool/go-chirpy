@@ -89,6 +89,7 @@ func handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 	dbCon, err := database.NewDB("./database.json")
 	if err != nil {
 		log.Printf("Error handling db connection: %s", err)
+		w.WriteHeader(503)
 		return
 	}
 	allChirps, err := dbCon.GetChirps()
@@ -115,6 +116,10 @@ func handlerGetChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id, err := strconv.Atoi(idParam)
+	if err != nil {
+		log.Printf("Error converting id string to an int")
+		return
+	}
 	foundChirp, err := dbCon.GetChirpByID(id)
 	if err != nil {
 		log.Printf("Error getting chirps: %s", err)

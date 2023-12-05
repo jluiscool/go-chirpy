@@ -22,9 +22,14 @@ type Chirp struct {
 	Id   int    `json:"id"`
 }
 
-type User struct {
+type UserRes struct {
 	Id    int    `json:"id"`
 	Email string `json:"email"`
+}
+
+type User struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
 // NewDB creates new db map connection
@@ -155,26 +160,54 @@ func (db *DB) GetUsers() ([]User, error) {
 	return users, nil
 }
 
-func (db *DB) CreateUser(email string) (User, error) {
+func (db *DB) CreateUser(email, password string) (UserRes, error) {
 	//load db
 	dbStructure, err := db.loadDB()
 	if err != nil {
-		return User{}, err
+		return UserRes{}, err
 	}
 	//get new id
 	userId := len(dbStructure.Users) + 1
-	//make user
-	user := User{
+	//make user response
+	userRes := UserRes{
 		Email: email,
 		Id:    userId,
+	}
+	//make user to put in db
+	user := User{
+		Email:    email,
+		Password: password,
 	}
 	//put user into structure
 	dbStructure.Users[userId] = user
 	//put structure into db
 	err = db.writeDB(dbStructure)
 	if err != nil {
-		return user, err
+		return userRes, err
 	}
 	//return user
-	return user, nil
+	return userRes, nil
+}
+
+func (db *DB) FindUser(email, password string) (UserRes, error) {
+	//load db
+	dbCon, err := db.loadDB()
+	if err != nil {
+		return UserRes{}, errors.New("error with database connection")
+	}
+	//look through db
+	foundUser := UserRes{}
+	dbStructure := dbCon.Users
+	userId := len(dbStructure)
+	for _, user := range dbStructure {
+		if user.Email == email && user.Password == password {
+			foundUser.Email = user.Email
+			foundUser.Id = userId
+		}
+	}
+	if foundUser.Email == "" {
+		return foundUser, errors.New("no user found")
+	}
+	//if found, return user, else return empty user with error
+	return foundUser, nil
 }

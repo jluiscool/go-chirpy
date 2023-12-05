@@ -39,7 +39,9 @@ func handlerGetUsers(w http.ResponseWriter, r *http.Request) {
 func handlePostUsers(w http.ResponseWriter, r *http.Request) {
 	//make empty user
 	type parameters struct {
-		Email string `json:"email"`
+		Email              string `json:"email"`
+		Password           string `json:"password"`
+		Expires_In_Seconds int    `json:"expires_in_seconds"`
 	}
 	//decode json
 	//make new decoder
@@ -60,7 +62,7 @@ func handlePostUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	//create new user
-	newUser, err := dbCon.CreateUser(params.Email)
+	newUser, err := dbCon.CreateUser(params.Email, params.Password)
 	if err != nil {
 		log.Printf("unable to create new user: %s", err)
 		w.WriteHeader(500)
@@ -76,4 +78,8 @@ func handlePostUsers(w http.ResponseWriter, r *http.Request) {
 	//write to response
 	w.WriteHeader(201)
 	w.Write(dat)
+}
+
+func handlePutUsers(w http.ResponseWriter, r *http.Request) {
+
 }

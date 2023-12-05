@@ -6,6 +6,8 @@ import (
 	"log"
 	"net/http"
 	"strings"
+
+	"github.com/jluiscool/go-chirpy/internal/database"
 )
 
 type Chirp struct {
@@ -26,6 +28,7 @@ func handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(500)
 		return
 	}
+
 	cleanedChirp, err := validateChirp(params.Body)
 	if err != nil {
 		type returnErr struct {
@@ -42,12 +45,21 @@ func handlerPostChirp(w http.ResponseWriter, r *http.Request) {
 		w.Write(dat)
 		return
 	}
+	//write to database
+	dbCon, err := database.NewDB("./database.json")
+	if err != nil {
+		log.Printf("Error handling db connection: %s", err)
+		return
+	}
+	newChirp, err := dbCon.CreateChirp(cleanedChirp)
+	if err != nil {
+		log.Printf("Error creating new chirp: %s", err)
+		return
+	}
 	//encode response
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
-	respBody := Chirp{
-		Body: cleanedChirp,
-	}
+	respBody := newChirp
 	dat, err := json.Marshal(respBody)
 	if err != nil {
 		log.Printf("Error marshalling JSON: %s", err)
@@ -69,4 +81,26 @@ func validateChirp(body string) (string, error) {
 	}
 	filteredSentence := strings.Join(words, " ")
 	return filteredSentence, nil
+}
+
+func handlerGetChirps(w http.ResponseWriter, r *http.Request) {
+	dbCon, err := database.NewDB("./database.json")
+	if err != nil {
+		log.Printf("Error handling db connection: %s", err)
+		return
+	}
+	allChirps, err := dbCon.GetChirps()
+	if err != nil {
+		log.Printf("Error getting chirps: %s", err)
+		return
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	dat, err := json.Marshal(allChirps)
+	if err != nil {
+		log.Printf("Error marshalling JSON: %s", err)
+		w.WriteHeader(500)
+		return
+	}
+	w.Write(dat)
 }

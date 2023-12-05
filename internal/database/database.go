@@ -21,7 +21,7 @@ type Chirp struct {
 	Id   int    `json:"id"`
 }
 
-// NewDB creates new db map
+// NewDB creates new db map connection
 func NewDB(path string) (*DB, error) {
 	db := &DB{
 		path: path,
